@@ -1,4 +1,3 @@
-import { CorsOptions } from '@nestjs/common/interfaces/external/cors-options.interface';
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
@@ -7,10 +6,6 @@ import { PrismaService } from './prisma/prisma.service';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-app.enableCors({
-  origin: '*', // temporary fix (later secure pannalam)
-  credentials: true,
-});
 
   app.setGlobalPrefix('api');
   app.useGlobalPipes(
@@ -22,21 +17,19 @@ app.enableCors({
   );
 
   app.enableCors({
-    origin: process.env.FRONTEND_ORIGIN ?? 'http://localhost:3000',
+    origin: [
+      'http://localhost:3000',
+      'http://localhost:3002',
+      'https://lifelink-ai.vercel.app',
+      'https://lifelink-jmird1oia-rohithvenki21-9523s-projects.vercel.app',
+    ],
     credentials: true,
   });
 
   const swaggerConfig = new DocumentBuilder()
     .setTitle('LifeLink AI API')
-    .setDescription('Step 2 APIs for healthcare coordination, matching workflow, and blood bank operations')
+    .setDescription('Healthcare coordination system')
     .setVersion('2.0.0')
-    .addTag('patients')
-    .addTag('donors')
-    .addTag('dashboard')
-    .addTag('matches')
-    .addTag('notifications')
-    .addTag('reports')
-    .addTag('blood-banks')
     .build();
 
   const document = SwaggerModule.createDocument(app, swaggerConfig);
