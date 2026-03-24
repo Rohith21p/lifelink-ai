@@ -1,3 +1,4 @@
+import { CorsOptions } from '@nestjs/common/interfaces/external/cors-options.interface';
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
@@ -6,6 +7,10 @@ import { PrismaService } from './prisma/prisma.service';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+app.enableCors({
+  origin: '*', // temporary fix (later secure pannalam)
+  credentials: true,
+});
 
   app.setGlobalPrefix('api');
   app.useGlobalPipes(

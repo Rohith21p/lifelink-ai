@@ -1,0 +1,6 @@
+NODE_ENV=development
+PORT=3001
+
+DATABASE_URL=postgresql://neondb_owner:npg_7qKy4dEOsHGl@ep-lingering-rain-a15y5qbt-pooler.ap-southeast-1.aws.neon.tech/neondb?sslmode=require
+
+FRONTEND_ORIGIN=http://localhost:3002
