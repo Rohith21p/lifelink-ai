@@ -1,0 +1,109 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 210 60% 99%;
+  --foreground: 220 28% 16%;
+  --card: 0 0% 100%;
+  --card-foreground: 220 30% 16%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 220 30% 16%;
+  --primary: 206 94% 38%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 182 74% 38%;
+  --secondary-foreground: 210 40% 99%;
+  --muted: 212 32% 95%;
+  --muted-foreground: 218 14% 42%;
+  --accent: 188 74% 40%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 0 76% 53%;
+  --destructive-foreground: 0 0% 100%;
+  --success: 156 66% 34%;
+  --warning: 33 90% 49%;
+  --critical: 0 73% 51%;
+  --border: 212 26% 89%;
+  --input: 212 28% 86%;
+  --ring: 206 94% 38%;
+  --radius: 1.1rem;
+}
+
+* {
+  @apply border-border;
+}
+
+body {
+  @apply bg-background text-foreground antialiased selection:bg-primary/20 selection:text-foreground;
+  font-family: 'Satoshi', 'General Sans', 'Manrope', 'Segoe UI', 'Helvetica Neue', sans-serif;
+  background-image:
+    radial-gradient(circle at 9% 8%, rgba(13, 148, 223, 0.16), transparent 30%),
+    radial-gradient(circle at 96% 2%, rgba(20, 184, 166, 0.16), transparent 26%),
+    linear-gradient(180deg, #fbfdff 0%, #f6faff 44%, #f8fbff 100%);
+  min-height: 100vh;
+  letter-spacing: 0.005em;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: 'Cabinet Grotesk', 'Satoshi', 'Manrope', 'Segoe UI', sans-serif;
+  letter-spacing: -0.01em;
+}
+
+::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(12, 104, 182, 0.3);
+  border-radius: 999px;
+}
+
+::selection {
+  background-color: rgba(14, 116, 144, 0.2);
+}
+
+@layer utilities {
+  .surface {
+    @apply rounded-2xl border border-border/70 bg-white/95 shadow-[0_10px_32px_-18px_rgba(15,23,42,0.26)];
+  }
+
+  .surface-soft {
+    @apply rounded-2xl border border-white/60 bg-gradient-to-br from-white to-slate-50/90 shadow-[0_10px_28px_-20px_rgba(2,132,199,0.35)];
+  }
+
+  .premium-title {
+    @apply text-balance text-2xl font-semibold tracking-[-0.03em] text-slate-900 md:text-3xl;
+  }
+
+  .soft-divider {
+    @apply border-b border-border/70;
+  }
+
+  .shimmer {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .shimmer::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(
+      110deg,
+      rgba(255, 255, 255, 0) 0%,
+      rgba(255, 255, 255, 0.75) 50%,
+      rgba(255, 255, 255, 0) 100%
+    );
+    animation: lifelink-shimmer 1.8s infinite;
+  }
+}
+
+@keyframes lifelink-shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}

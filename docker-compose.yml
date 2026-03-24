@@ -1,0 +1,46 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: lifelink-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: lifelinkai
+    ports:
+      - '5432:5432'
+    volumes:
+      - lifelink_pgdata:/var/lib/postgresql/data
+
+  backend:
+    build:
+      context: ./apps/backend
+      dockerfile: Dockerfile
+    container_name: lifelink-backend
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/lifelinkai?schema=public
+      FRONTEND_ORIGIN: http://localhost:3000
+    depends_on:
+      - postgres
+    ports:
+      - '3001:3001'
+
+  frontend:
+    build:
+      context: ./apps/frontend
+      dockerfile: Dockerfile
+    container_name: lifelink-frontend
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_API_BASE_URL: http://localhost:3001/api
+    depends_on:
+      - backend
+    ports:
+      - '3000:3000'
+
+volumes:
+  lifelink_pgdata:

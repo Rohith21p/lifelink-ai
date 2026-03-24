@@ -1,0 +1,572 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum CoordinatorRole {
+  ADMIN
+  COORDINATOR
+  EXECUTIVE
+}
+
+enum OrganType {
+  KIDNEY
+  LIVER
+  HEART
+  LUNG
+  PANCREAS
+  CORNEA
+  BLOOD
+  PLASMA
+}
+
+enum UrgencyLevel {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum CaseStatus {
+  NEW
+  UNDER_REVIEW
+  MATCHING
+  TRANSPLANT_SCHEDULED
+  CLOSED
+}
+
+enum DonorStatus {
+  AVAILABLE
+  TEMP_UNAVAILABLE
+  INACTIVE
+}
+
+enum MatchStatus {
+  PENDING
+  SHORTLISTED
+  CONTACTED
+  APPROVED
+  REJECTED
+  COMPLETED
+}
+
+enum MatchReviewAction {
+  REVIEW
+  SHORTLIST
+  APPROVE
+  REJECT
+  NOTIFY
+}
+
+enum DonationType {
+  ORGAN
+  BLOOD
+  PLASMA
+}
+
+enum NotificationType {
+  INFO
+  WARNING
+  ALERT
+}
+
+enum NotificationChannel {
+  IN_APP
+  SMS
+  EMAIL
+  WHATSAPP
+}
+
+enum NotificationEventType {
+  NEW_MATCH_FOUND
+  URGENT_CASE_CREATED
+  DONOR_SHORTLISTED
+  PATIENT_STATUS_UPDATED
+  APPOINTMENT_REMINDER
+  LOW_BLOOD_STOCK_ALERT
+}
+
+enum NotificationDeliveryStatus {
+  QUEUED
+  SENT
+  FAILED
+}
+
+enum ReportFileType {
+  PDF
+  IMAGE
+}
+
+enum ExtractionStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum BloodRequestStatus {
+  OPEN
+  IN_PROGRESS
+  FULFILLED
+  CANCELLED
+}
+
+model Hospital {
+  id            String         @id @default(uuid()) @db.Uuid
+  name          String
+  code          String         @unique
+  address       String
+  city          String
+  state         String
+  contactNumber String         @map("contact_number")
+  coordinators  Coordinator[]
+  patients      Patient[]
+  donors        Donor[]
+  bloodBanks    BloodBank[]
+  notifications Notification[]
+  settings      Setting[]
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
+
+  @@index([city, state])
+  @@map("hospitals")
+}
+
+model Coordinator {
+  id              String               @id @default(uuid()) @db.Uuid
+  hospitalId      String               @map("hospital_id") @db.Uuid
+  fullName        String               @map("full_name")
+  phone           String
+  email           String               @unique
+  role            CoordinatorRole      @default(COORDINATOR)
+  hospital        Hospital             @relation(fields: [hospitalId], references: [id])
+  patients        Patient[]
+  donors          Donor[]
+  matchesReviewed DonorPatientMatch[]  @relation("CoordinatorMatchReview")
+  matchReviews    MatchReview[]        @relation("CoordinatorMatchReviews")
+  uploadedReports ReportFile[]         @relation("ReportUploader")
+  bloodRequests   BloodRequest[]       @relation("CoordinatorBloodRequests")
+  createdAt       DateTime             @default(now()) @map("created_at")
+  updatedAt       DateTime             @updatedAt @map("updated_at")
+
+  @@index([hospitalId, role])
+  @@map("coordinators")
+}
+
+model Patient {
+  id             String                @id @default(uuid()) @db.Uuid
+  hospitalId     String                @map("hospital_id") @db.Uuid
+  coordinatorId  String?               @map("coordinator_id") @db.Uuid
+  uhid           String                @unique
+  fullName       String                @map("full_name")
+  age            Int
+  gender         Gender
+  bloodGroup     String                @map("blood_group")
+  city           String
+  district       String?
+  state          String
+  organNeeded    OrganType             @map("organ_needed")
+  urgencyLevel   UrgencyLevel          @map("urgency_level")
+  caseStatus     CaseStatus            @default(NEW) @map("case_status")
+  requestActive  Boolean               @default(true) @map("request_active")
+  hospital       Hospital              @relation(fields: [hospitalId], references: [id])
+  coordinator    Coordinator?          @relation(fields: [coordinatorId], references: [id])
+  medicalProfile PatientMedicalProfile?
+  request        PatientRequest?
+  guardians      PatientGuardian[]
+  reportFiles    ReportFile[]
+  bloodRequests  BloodRequest[]
+  matches        DonorPatientMatch[]
+  caseTimelines  CaseTimeline[]
+  notificationLogs NotificationLog[]
+  createdAt      DateTime              @default(now()) @map("created_at")
+  updatedAt      DateTime              @updatedAt @map("updated_at")
+
+  @@index([hospitalId])
+  @@index([caseStatus, urgencyLevel])
+  @@index([bloodGroup, organNeeded])
+  @@index([city, district, state])
+  @@map("patients")
+}
+
+model PatientMedicalProfile {
+  id                 String    @id @default(uuid()) @db.Uuid
+  patientId          String    @unique @map("patient_id") @db.Uuid
+  primaryDiagnosis   String    @map("primary_diagnosis")
+  comorbidities      String?
+  heightCm           Float?    @map("height_cm")
+  weightKg           Float?    @map("weight_kg")
+  allergies          String?
+  currentMedication  String?   @map("current_medication")
+  lastAssessmentDate DateTime? @map("last_assessment_date")
+  patient            Patient   @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
+
+  @@map("patient_medical_profiles")
+}
+
+model PatientRequest {
+  id               String    @id @default(uuid()) @db.Uuid
+  patientId        String    @unique @map("patient_id") @db.Uuid
+  organType        OrganType @map("organ_type")
+  requestedOn      DateTime  @default(now()) @map("requested_on")
+  requiredBy       DateTime? @map("required_by")
+  hospitalPriority Int       @default(3) @map("hospital_priority")
+  notes            String?
+  patient          Patient   @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+
+  @@index([organType, requiredBy])
+  @@map("patient_requests")
+}
+
+model PatientGuardian {
+  id        String   @id @default(uuid()) @db.Uuid
+  patientId String   @map("patient_id") @db.Uuid
+  fullName  String   @map("full_name")
+  relation  String
+  phone     String
+  email     String?
+  isPrimary Boolean  @default(false) @map("is_primary")
+  patient   Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([patientId, isPrimary])
+  @@map("patient_guardians")
+}
+
+model Donor {
+  id               String              @id @default(uuid()) @db.Uuid
+  hospitalId       String              @map("hospital_id") @db.Uuid
+  coordinatorId    String?             @map("coordinator_id") @db.Uuid
+  donorCode        String              @unique @map("donor_code")
+  fullName         String              @map("full_name")
+  age              Int
+  gender           Gender
+  bloodGroup       String              @map("blood_group")
+  city             String
+  district         String?
+  state            String
+  status           DonorStatus         @default(AVAILABLE)
+  lastDonationDate DateTime?           @map("last_donation_date")
+  availableFrom    DateTime?           @map("available_from")
+  hospital         Hospital            @relation(fields: [hospitalId], references: [id])
+  coordinator      Coordinator?        @relation(fields: [coordinatorId], references: [id])
+  medicalProfile   DonorMedicalProfile?
+  availability     DonorAvailability?
+  preference       DonorPreference?
+  matches          DonorPatientMatch[]
+  notificationLogs NotificationLog[]
+  createdAt        DateTime            @default(now()) @map("created_at")
+  updatedAt        DateTime            @updatedAt @map("updated_at")
+
+  @@index([hospitalId, status])
+  @@index([bloodGroup, status])
+  @@index([city, district, state])
+  @@map("donors")
+}
+
+model DonorMedicalProfile {
+  id                         String    @id @default(uuid()) @db.Uuid
+  donorId                    String    @unique @map("donor_id") @db.Uuid
+  bmi                        Float?
+  medicalConditions          String?   @map("medical_conditions")
+  infectiousDiseaseScreening String?   @map("infectious_disease_screening")
+  lastScreeningDate          DateTime? @map("last_screening_date")
+  notes                      String?
+  donor                      Donor     @relation(fields: [donorId], references: [id], onDelete: Cascade)
+  createdAt                  DateTime  @default(now()) @map("created_at")
+  updatedAt                  DateTime  @updatedAt @map("updated_at")
+
+  @@map("donor_medical_profiles")
+}
+
+model DonorAvailability {
+  id                  String   @id @default(uuid()) @db.Uuid
+  donorId             String   @unique @map("donor_id") @db.Uuid
+  isAvailable         Boolean  @default(true) @map("is_available")
+  availableDays       String[] @default([]) @map("available_days")
+  preferredTimeWindow String?  @map("preferred_time_window")
+  travelRadiusKm      Int?     @map("travel_radius_km")
+  donor               Donor    @relation(fields: [donorId], references: [id], onDelete: Cascade)
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+
+  @@index([isAvailable])
+  @@map("donor_availability")
+}
+
+model DonorPreference {
+  id                    String         @id @default(uuid()) @db.Uuid
+  donorId               String         @unique @map("donor_id") @db.Uuid
+  organDonationOptIn    Boolean        @default(true) @map("organ_donation_opt_in")
+  bloodDonationOptIn    Boolean        @default(true) @map("blood_donation_opt_in")
+  maxRequestsPerMonth   Int            @default(2) @map("max_requests_per_month")
+  supportedDonationTypes DonationType[] @default([]) @map("supported_donation_types")
+  preferredHospitals    String[]       @default([]) @map("preferred_hospitals")
+  donor                 Donor          @relation(fields: [donorId], references: [id], onDelete: Cascade)
+  createdAt             DateTime       @default(now()) @map("created_at")
+  updatedAt             DateTime       @updatedAt @map("updated_at")
+
+  @@map("donor_preferences")
+}
+
+model DonorPatientMatch {
+  id                      String            @id @default(uuid()) @db.Uuid
+  patientId               String            @map("patient_id") @db.Uuid
+  donorId                 String            @map("donor_id") @db.Uuid
+  status                  MatchStatus       @default(PENDING)
+  compatibilityScore      Float?            @map("compatibility_score")
+  bloodCompatibilityScore Float?            @map("blood_compatibility_score")
+  locationScore           Float?            @map("location_score")
+  availabilityScore       Float?            @map("availability_score")
+  overallScore            Float?            @map("overall_score")
+  urgencyLevel            UrgencyLevel?     @map("urgency_level")
+  matchReason             String?           @map("match_reason")
+  reviewNotes             String?           @map("review_notes")
+  reviewedByCoordinatorId String?           @map("reviewed_by_coordinator_id") @db.Uuid
+  reviewedAt              DateTime?         @map("reviewed_at")
+  notifiedAt              DateTime?         @map("notified_at")
+  patient                 Patient           @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  donor                   Donor             @relation(fields: [donorId], references: [id], onDelete: Cascade)
+  reviewedByCoordinator   Coordinator?      @relation("CoordinatorMatchReview", fields: [reviewedByCoordinatorId], references: [id], onDelete: SetNull)
+  reviews                 MatchReview[]
+  notificationLogs        NotificationLog[]
+  createdAt               DateTime          @default(now()) @map("created_at")
+  updatedAt               DateTime          @updatedAt @map("updated_at")
+
+  @@unique([patientId, donorId])
+  @@index([status])
+  @@index([patientId, donorId])
+  @@index([urgencyLevel, status])
+  @@index([overallScore])
+  @@map("donor_patient_matches")
+}
+
+model MatchReview {
+  id                  String            @id @default(uuid()) @db.Uuid
+  matchId             String            @map("match_id") @db.Uuid
+  reviewerCoordinatorId String?         @map("reviewer_coordinator_id") @db.Uuid
+  action              MatchReviewAction
+  note                String?
+  match               DonorPatientMatch @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  reviewer            Coordinator?      @relation("CoordinatorMatchReviews", fields: [reviewerCoordinatorId], references: [id], onDelete: SetNull)
+  createdAt           DateTime          @default(now()) @map("created_at")
+  updatedAt           DateTime          @updatedAt @map("updated_at")
+
+  @@index([matchId, createdAt])
+  @@map("match_reviews")
+}
+
+model Notification {
+  id         String                @id @default(uuid()) @db.Uuid
+  hospitalId String?               @map("hospital_id") @db.Uuid
+  type       NotificationType
+  channel    NotificationChannel   @default(IN_APP)
+  eventType  NotificationEventType? @map("event_type")
+  targetRole String?               @map("target_role")
+  title      String
+  message    String
+  metadata   Json?
+  isRead     Boolean               @default(false) @map("is_read")
+  hospital   Hospital?             @relation(fields: [hospitalId], references: [id], onDelete: SetNull)
+  logs       NotificationLog[]
+  createdAt  DateTime              @default(now()) @map("created_at")
+  updatedAt  DateTime              @updatedAt @map("updated_at")
+
+  @@index([isRead, createdAt])
+  @@index([eventType, createdAt])
+  @@map("notifications")
+}
+
+model NotificationTemplate {
+  id           String               @id @default(uuid()) @db.Uuid
+  name         String               @unique
+  eventType    NotificationEventType @map("event_type")
+  channel      NotificationChannel
+  subject      String?
+  bodyTemplate String               @map("body_template")
+  isActive     Boolean              @default(true) @map("is_active")
+  logs         NotificationLog[]
+  createdAt    DateTime             @default(now()) @map("created_at")
+  updatedAt    DateTime             @updatedAt @map("updated_at")
+
+  @@index([eventType, channel, isActive])
+  @@map("notification_templates")
+}
+
+model NotificationLog {
+  id           String                     @id @default(uuid()) @db.Uuid
+  notificationId String?                  @map("notification_id") @db.Uuid
+  templateId   String?                    @map("template_id") @db.Uuid
+  channel      NotificationChannel
+  eventType    NotificationEventType?     @map("event_type")
+  status       NotificationDeliveryStatus @default(QUEUED)
+  recipient    String?
+  message      String
+  metadata     Json?
+  patientId    String?                    @map("patient_id") @db.Uuid
+  donorId      String?                    @map("donor_id") @db.Uuid
+  matchId      String?                    @map("match_id") @db.Uuid
+  reportFileId String?                    @map("report_file_id") @db.Uuid
+  bloodBankId  String?                    @map("blood_bank_id") @db.Uuid
+  sentAt       DateTime?                  @map("sent_at")
+  notification Notification?              @relation(fields: [notificationId], references: [id], onDelete: SetNull)
+  template     NotificationTemplate?      @relation(fields: [templateId], references: [id], onDelete: SetNull)
+  patient      Patient?                   @relation(fields: [patientId], references: [id], onDelete: SetNull)
+  donor        Donor?                     @relation(fields: [donorId], references: [id], onDelete: SetNull)
+  match        DonorPatientMatch?         @relation(fields: [matchId], references: [id], onDelete: SetNull)
+  reportFile   ReportFile?                @relation(fields: [reportFileId], references: [id], onDelete: SetNull)
+  bloodBank    BloodBank?                 @relation(fields: [bloodBankId], references: [id], onDelete: SetNull)
+  createdAt    DateTime                   @default(now()) @map("created_at")
+  updatedAt    DateTime                   @updatedAt @map("updated_at")
+
+  @@index([channel, status, createdAt])
+  @@index([eventType, createdAt])
+  @@map("notification_logs")
+}
+
+model ReportFile {
+  id                    String           @id @default(uuid()) @db.Uuid
+  patientId             String           @map("patient_id") @db.Uuid
+  uploadedByCoordinatorId String?        @map("uploaded_by_coordinator_id") @db.Uuid
+  fileName              String           @map("file_name")
+  fileType              ReportFileType   @map("file_type")
+  fileUrl               String?          @map("file_url")
+  fileSizeKb            Int?             @map("file_size_kb")
+  notes                 String?
+  extractionStatus      ExtractionStatus @default(PENDING) @map("extraction_status")
+  extractedSummary      String?          @map("extracted_summary")
+  metadata              Json?
+  patient               Patient          @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  uploadedBy            Coordinator?     @relation("ReportUploader", fields: [uploadedByCoordinatorId], references: [id], onDelete: SetNull)
+  extractions           ReportExtraction[]
+  notificationLogs      NotificationLog[]
+  createdAt             DateTime         @default(now()) @map("created_at")
+  updatedAt             DateTime         @updatedAt @map("updated_at")
+
+  @@index([patientId, createdAt])
+  @@index([extractionStatus])
+  @@map("report_files")
+}
+
+model ReportExtraction {
+  id                String           @id @default(uuid()) @db.Uuid
+  reportFileId      String           @map("report_file_id") @db.Uuid
+  status            ExtractionStatus @default(PENDING)
+  bloodGroup        String?          @map("blood_group")
+  diagnosis         String?
+  keyNotes          String?          @map("key_notes")
+  urgencyHint       String?          @map("urgency_hint")
+  flaggedConditions String[]         @default([]) @map("flagged_conditions")
+  rawPayload        Json?            @map("raw_payload")
+  reportFile        ReportFile       @relation(fields: [reportFileId], references: [id], onDelete: Cascade)
+  createdAt         DateTime         @default(now()) @map("created_at")
+  updatedAt         DateTime         @updatedAt @map("updated_at")
+
+  @@index([reportFileId, status])
+  @@map("report_extractions")
+}
+
+model BloodBank {
+  id            String            @id @default(uuid()) @db.Uuid
+  hospitalId    String?           @map("hospital_id") @db.Uuid
+  name          String
+  code          String            @unique
+  address       String
+  city          String
+  district      String?
+  state         String
+  contactNumber String            @map("contact_number")
+  hospital      Hospital?         @relation(fields: [hospitalId], references: [id], onDelete: SetNull)
+  inventory     BloodInventory[]
+  bloodRequests BloodRequest[]
+  notificationLogs NotificationLog[]
+  createdAt     DateTime          @default(now()) @map("created_at")
+  updatedAt     DateTime          @updatedAt @map("updated_at")
+
+  @@index([city, district, state])
+  @@map("blood_banks")
+}
+
+model BloodInventory {
+  id               String   @id @default(uuid()) @db.Uuid
+  bloodBankId      String   @map("blood_bank_id") @db.Uuid
+  bloodGroup       String   @map("blood_group")
+  unitsAvailable   Int      @default(0) @map("units_available")
+  lowStockThreshold Int     @default(10) @map("low_stock_threshold")
+  lastUpdatedBy    String?  @map("last_updated_by")
+  lastUpdatedAt    DateTime @default(now()) @map("last_updated_at")
+  bloodBank        BloodBank @relation(fields: [bloodBankId], references: [id], onDelete: Cascade)
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  @@unique([bloodBankId, bloodGroup])
+  @@index([unitsAvailable, lowStockThreshold])
+  @@map("blood_inventory")
+}
+
+model BloodRequest {
+  id                     String            @id @default(uuid()) @db.Uuid
+  bloodBankId            String            @map("blood_bank_id") @db.Uuid
+  patientId              String?           @map("patient_id") @db.Uuid
+  requestedByCoordinatorId String?         @map("requested_by_coordinator_id") @db.Uuid
+  bloodGroup             String            @map("blood_group")
+  unitsRequested         Int               @map("units_requested")
+  status                 BloodRequestStatus @default(OPEN)
+  priority               UrgencyLevel      @default(MEDIUM)
+  requiredBy             DateTime?         @map("required_by")
+  notes                  String?
+  fulfilledAt            DateTime?         @map("fulfilled_at")
+  bloodBank              BloodBank         @relation(fields: [bloodBankId], references: [id], onDelete: Cascade)
+  patient                Patient?          @relation(fields: [patientId], references: [id], onDelete: SetNull)
+  requestedBy            Coordinator?      @relation("CoordinatorBloodRequests", fields: [requestedByCoordinatorId], references: [id], onDelete: SetNull)
+  createdAt              DateTime          @default(now()) @map("created_at")
+  updatedAt              DateTime          @updatedAt @map("updated_at")
+
+  @@index([bloodBankId, status])
+  @@index([bloodGroup, priority])
+  @@map("blood_requests")
+}
+
+model CaseTimeline {
+  id          String   @id @default(uuid()) @db.Uuid
+  patientId   String   @map("patient_id") @db.Uuid
+  eventType   String   @map("event_type")
+  description String
+  eventAt     DateTime @default(now()) @map("event_at")
+  createdBy   String   @map("created_by")
+  patient     Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@index([patientId, eventAt])
+  @@map("case_timelines")
+}
+
+model Setting {
+  id         String    @id @default(uuid()) @db.Uuid
+  hospitalId String?   @map("hospital_id") @db.Uuid
+  key        String
+  value      Json
+  hospital   Hospital? @relation(fields: [hospitalId], references: [id], onDelete: Cascade)
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+
+  @@unique([hospitalId, key])
+  @@index([key])
+  @@map("settings")
+}

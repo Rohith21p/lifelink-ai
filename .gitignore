@@ -1,0 +1,26 @@
+node_modules/
+
+# OS
+.DS_Store
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Env
+.env
+.env.local
+.env.*.local
+
+# Build
+.next/
+dist/
+coverage/
+
+# Prisma
+apps/backend/prisma/dev.db
+
+# Docker
+*.pid
