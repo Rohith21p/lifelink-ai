@@ -1,24 +1,20 @@
+import type { Metadata } from 'next';
 import './globals.css';
 import { Providers } from './providers';
 
+export const metadata: Metadata = {
+  title: 'LifeLink AI',
+  description: 'Smart patient, donor, and hospital workflow system',
+  verification: {
+    google: 'Unls7d0aCwztfT0OAQduqqQi2JwHaGGcxaSUDNHi3Zc',
+  },
+};
+
 export default function RootLayout({
   children,
-}: {
-  children: React.ReactNode;
-}) {
+}: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <head>
-        <meta
-          name="google-site-verification"
-          content="Unls7d0aCwztfT0OAQduqqQi2JwHaGGcxaSUDNHi3Zc"
-        />
-        <title>LifeLink AI</title>
-        <meta
-          name="description"
-          content="Smart patient, donor, and hospital workflow system"
-        />
-      </head>
       <body>
         <Providers>{children}</Providers>
       </body>
