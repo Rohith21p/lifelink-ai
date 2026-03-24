@@ -1,6 +1,6 @@
 import axios from 'axios';
 
 export const apiClient = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:3001/api',
+  baseURL: 'https://lifelink-backend-5aum.onrender.com/api',
   timeout: 15_000,
 });
