@@ -1,11 +1,9 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { Providers } from './providers';
-
-export const metadata: Metadata = {
-  title: 'LifeLink AI',
-  description: 'Smart Donor, Patient, and Hospital Coordination Platform',
-};
+export const metadata = {
+  title: "LifeLink AI",
+  description: "Smart patient, donor,
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
