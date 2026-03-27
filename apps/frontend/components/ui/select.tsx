@@ -21,7 +21,7 @@ export function Select({ value, onChange, options, className, placeholder, disab
       value={value}
       onChange={(event) => onChange?.(event.target.value)}
       className={cn(
-        'h-10 w-full rounded-xl border border-input/90 bg-white/95 px-3 text-sm text-slate-800 transition-colors focus-visible:border-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/70 disabled:cursor-not-allowed disabled:opacity-50',
+        'h-11 w-full rounded-xl border border-input/90 bg-white/95 px-3 text-sm text-slate-800 transition-colors focus-visible:border-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/70 disabled:cursor-not-allowed disabled:opacity-50 sm:h-10',
         className,
       )}
       disabled={disabled}

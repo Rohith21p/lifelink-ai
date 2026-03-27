@@ -514,11 +514,17 @@ export function PatientForm({ mode, initialPatient }: PatientFormProps) {
         <p className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">{submitError}</p>
       ) : null}
 
-      <div className="flex justify-end gap-3">
-        <Button type="button" variant="outline" onClick={() => router.back()} disabled={mutation.isPending}>
+      <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => router.back()}
+          disabled={mutation.isPending}
+          className="w-full sm:w-auto"
+        >
           Cancel
         </Button>
-        <Button type="submit" disabled={mutation.isPending}>
+        <Button type="submit" disabled={mutation.isPending} className="w-full sm:w-auto">
           {mutation.isPending ? 'Saving...' : mode === 'create' ? 'Create Patient' : 'Update Patient'}
         </Button>
       </div>

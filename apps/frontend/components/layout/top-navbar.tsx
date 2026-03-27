@@ -8,6 +8,7 @@ import {
   BrainCircuit,
   ChevronsUpDown,
   CircleUserRound,
+  Menu,
   Plus,
   Search,
   Sparkles,
@@ -34,7 +35,7 @@ const mobileLinks = [
 
 export function TopNavbar() {
   const { role, setRole, demoMode, toggleDemoMode } = useDemoStore();
-  const { insightPanelOpen, toggleInsightPanel } = useUiStore();
+  const { insightPanelOpen, toggleInsightPanel, toggleMobileSidebar } = useUiStore();
   const pathname = usePathname();
   const [searchValue, setSearchValue] = useState('');
   const [showNotif, setShowNotif] = useState(false);
@@ -57,18 +58,28 @@ export function TopNavbar() {
   }, [role]);
 
   return (
-    <header className="sticky top-0 z-30 border-b border-border/70 bg-white/78 px-4 py-3 backdrop-blur-xl md:px-6">
+    <header className="sticky top-0 z-30 border-b border-border/70 bg-white/82 px-3 py-3 backdrop-blur-xl sm:px-4 md:px-6">
       <div className="mx-auto flex w-full max-w-[1280px] flex-col gap-3">
-        <div className="flex flex-wrap items-center gap-3">
-          <div>
-            <p className="text-[11px] uppercase tracking-[0.22em] text-muted-foreground">LifeLink AI</p>
-            <h2 className="flex items-center gap-2 text-xl font-semibold text-slate-900">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+          <button
+            type="button"
+            onClick={toggleMobileSidebar}
+            className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-border bg-white text-slate-700 hover:bg-muted/70 lg:hidden"
+            aria-label="Open navigation menu"
+          >
+            <Menu className="h-4 w-4" />
+          </button>
+
+          <div className="min-w-0">
+            <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground sm:text-[11px]">LifeLink AI</p>
+            <h2 className="flex items-center gap-1.5 truncate text-base font-semibold text-slate-900 sm:gap-2 sm:text-xl">
               <Stethoscope className="h-5 w-5 text-primary" />
               {roleLabel}
             </h2>
           </div>
 
-          <div className="relative ml-auto min-w-[240px] flex-1 md:max-w-md">
+          <div className="order-3 w-full md:order-none md:ml-auto md:min-w-[240px] md:flex-1 md:max-w-md">
+            <div className="relative">
             <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
             <input
               value={searchValue}
@@ -76,9 +87,10 @@ export function TopNavbar() {
               placeholder="Search patients, donors, matches..."
               className="h-10 w-full rounded-xl border border-input/90 bg-white px-9 text-sm text-slate-800 shadow-[0_10px_28px_-24px_rgba(2,132,199,0.55)] focus-visible:border-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/70"
             />
+            </div>
           </div>
 
-          <div className="relative">
+          <div className="relative hidden sm:block">
             <button
               type="button"
               className="inline-flex h-10 items-center gap-2 rounded-xl border border-border bg-white px-3 text-sm font-medium text-slate-700 hover:bg-muted/70"
@@ -120,7 +132,7 @@ export function TopNavbar() {
             )}
           >
             <BrainCircuit className="h-4 w-4" />
-            AI Panel
+            <span className="hidden sm:inline">AI Panel</span>
           </button>
 
           <div className="relative">
@@ -161,7 +173,7 @@ export function TopNavbar() {
             ) : null}
           </div>
 
-          <div className="hidden items-center gap-2 rounded-xl border border-border bg-white px-3 py-2 md:flex">
+          <div className="hidden items-center gap-2 rounded-xl border border-border bg-white px-3 py-2 lg:flex">
             <CircleUserRound className="h-5 w-5 text-slate-500" />
             <div>
               <p className="text-xs font-semibold text-slate-800">Demo Operator</p>
@@ -170,7 +182,7 @@ export function TopNavbar() {
           </div>
         </div>
 
-        <div className="grid gap-3 md:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
           <div className="rounded-xl border border-border bg-white px-3 py-2">
             <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">Role View</p>
             <Select

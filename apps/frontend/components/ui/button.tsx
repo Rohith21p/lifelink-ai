@@ -18,8 +18,8 @@ const buttonVariants = cva(
         destructive: 'bg-destructive text-destructive-foreground shadow-[0_16px_28px_-18px_rgba(220,38,38,0.55)] hover:brightness-105',
       },
       size: {
-        default: 'h-10 px-4 py-2',
-        sm: 'h-8.5 rounded-lg px-3 text-xs',
+        default: 'h-11 px-4 py-2',
+        sm: 'h-9 rounded-lg px-3 text-xs',
         lg: 'h-11 px-6 text-[0.95rem]',
         icon: 'h-10 w-10 rounded-full',
       },

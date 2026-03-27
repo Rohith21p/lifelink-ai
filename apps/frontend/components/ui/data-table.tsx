@@ -94,7 +94,7 @@ export function DataTable<T>({
   return (
     <div className={cn('space-y-3', className)}>
       {searchable ? (
-        <div className="relative max-w-sm">
+        <div className="relative w-full sm:max-w-sm">
           <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             value={searchTerm}
